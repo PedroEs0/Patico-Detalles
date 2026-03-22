@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patico Detalles - Inicio de Sesión</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+              * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Quicksand', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #d4a5a5 0%, #e8c4c4 50%, #f5c6cc 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Elementos decorativos de fondo */
+        .deco-element {
+            position: absolute;
+            opacity: 0.15;
+            pointer-events: none;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(5deg); }
+        }
+
+        .teddy-1 {
+            top: 10%;
+            left: 8%;
+            font-size: 80px;
+            animation-delay: 0s;
+        }
+
+        .gift-1 {
+            top: 15%;
+            right: 12%;
+            font-size: 70px;
+            animation-delay: 1s;
+        }
+
+        .perfume-1 {
+            bottom: 15%;
+            left: 10%;
+            font-size: 75px;
+            animation-delay: 2s;
+        }
+
+        .heart-1 {
+            bottom: 20%;
+            right: 8%;
+            font-size: 65px;
+            animation-delay: 1.5s;
+        }
+
+        .lipstick-1 {
+            top: 50%;
+            left: 5%;
+            font-size: 60px;
+            animation-delay: 0.5s;
+        }
+
+        .star-1 {
+            top: 45%;
+            right: 6%;
+            font-size: 55px;
+            animation-delay: 2.5s;
+        }
+
+        /* Contenedor del login */
+        .login-container {
+            background: #ffffff;
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            padding: 50px 45px;
+            width: 450px;
+            max-width: 90%;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Logo y título */
+        .login-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo-box {
+            width: 100px;
+            height: 100px;
+            background: transparent;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .logo-box:hover {
+            transform: scale(1.05) translateY(-2px);
+        }
+
+        .logo-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 20px;
+        }
+        .company-title {
+            font-size: 36px;
+            font-weight: 700;
+            color: #513535;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: #8b6b6b;
+            font-weight: 500;
+        }
+
+        /* Formulario */
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-label {
+            font-size: 15px;
+            font-weight: 600;
+            color: #8b6b6b;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .required {
+            color: #d4a5a5;
+        }
+
+        .form-control {
+            padding: 14px 16px;
+            border: 2px solid #f0e6e8;
+            border-radius: 12px;
+            font-size: 15px;
+            color: #6b5454;
+            transition: all 0.3s ease;
+            font-family: 'Quicksand', sans-serif;
+            font-weight: 500;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #d4a5a5;
+            box-shadow: 0 0 0 0.2rem rgba(212, 165, 165, 0.25);
+        }
+
+        .form-control::placeholder {
+            color: #c4a9a9;
+            font-weight: 400;
+        }
+
+        /* Opciones adicionales */
+        .form-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: -8px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #d4a5a5;
+        }
+
+        .checkbox-group label {
+            font-size: 14px;
+            color: #8b6b6b;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .forgot-password {
+            font-size: 14px;
+            color: #d4a5a5;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .forgot-password:hover {
+            color: #c49999;
+            transform: translateX(3px);
+        }
+
+        /* Botón de login */
+        .btn-primary-custom {
+            background: linear-gradient(135deg, #c49999 0%, #d4a5a5 100%);
+            border: none;
+            color: white;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 8px;
+            box-shadow: 0 4px 15px rgba(196, 153, 153, 0.4);
+        }
+
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(212, 165, 165, 0.4);
+        }
+
+        .btn-primary-custom:active {
+            transform: translateY(0);
+        }
+
+        /* Divider */
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin: 32px 0 24px;
+            color: #a58585;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 2px;
+            background: linear-gradient(90deg, transparent 0%, #f0e6e8 50%, transparent 100%);
+        }
+
+        /* Registro */
+        .register-section {
+            text-align: center;
+            font-size: 15px;
+            color: #8b6b6b;
+            font-weight: 500;
+        }
+
+        .register-link {
+            color: #c49999;
+            text-decoration: none;
+            font-weight: 700;
+            margin-left: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .register-link:hover {
+            color: #513535;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .login-container {
+                padding: 40px 30px;
+            }
+
+            .company-title {
+                font-size: 28px;
+            }
+
+            .logo-box {
+                width: 80px;
+                height: 80px;
+                font-size: 50px;
+            }
+
+            .deco-element {
+                opacity: 0.1;
+            }
+        }
+        .credentials-info {
+            background: #fff9fa;
+            border: 2px solid #f0e6e8;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .credentials-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #8b6b6b;
+            margin-bottom: 10px;
+        }
+
+        .credentials-item {
+            font-size: 12px;
+            color: #6b5454;
+            margin: 4px 0;
+            font-family: monospace;
+        }
+
+        .alert-error {
+            background: #ffe5e5;
+            border: 2px solid #ff9999;
+            border-radius: 10px;
+            padding: 12px;
+            color: #d63333;
+            font-size: 14px;
+            font-weight: 600;
+            display: none;
+            margin-bottom: 20px;
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .alert-success {
+            background: #e5ffe5;
+            border: 2px solid #99ff99;
+            border-radius: 10px;
+            padding: 12px;
+            color: #33d633;
+            font-size: 14px;
+            font-weight: 600;
+            display: none;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .login-container {
+                padding: 40px 30px;
+            }
+
+            .company-title {
+                font-size: 28px;
+            }
+
+            .logo-box {
+                width: 80px;
+                height: 80px;
+                font-size: 50px;
+            }
+
+            .deco-element {
+                opacity: 0.1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Elementos decorativos de fondo -->
+    <div class="deco-element teddy-1">🧸</div>
+    <div class="deco-element gift-1">🎁</div>
+    <div class="deco-element perfume-1">🧴</div>
+    <div class="deco-element heart-1">💝</div>
+    <div class="deco-element lipstick-1">💄</div>
+    <div class="deco-element star-1">✨</div>
+
+    <!-- Contenedor del Login -->
+    <div class="login-container">
+        <div class="login-header">
+            <div class="logo-box">
+                <img src="../img/logo4.png" alt="Patico logo" class="logo-img">
+            </div>
+            <h1 class="company-title">Patico Detalles</h1>
+            <p class="subtitle">Inicia sesión en tu cuenta</p>
+        </div>
+
+        <!-- Alertas -->
+        <div id="alertError" class="alert-error"></div>
+        <div id="alertSuccess" class="alert-success"></div>
+
+        <form class="login-form" onsubmit="handleLogin(event)">
+            <div class="form-group">
+                <label class="form-label" for="usuario">
+                    <i class="bi bi-person-circle"></i> Usuario <span class="required">*</span>
+                </label>
+                <input 
+                    type="text" 
+                    id="usuario" 
+                    class="form-control" 
+                    placeholder="Ingresa tu usuario"
+                    required
+                    autocomplete="username"
+                >
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="password">
+                    <i class="bi bi-lock-fill"></i> Contraseña <span class="required">*</span>
+                </label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    class="form-control" 
+                    placeholder="Ingresa tu contraseña"
+                    required
+                    autocomplete="current-password"
+                >
+            </div>
+
+            <div class="form-options">
+                <div class="checkbox-group">
+                    <input type="checkbox" id="remember">
+                    <label for="remember">Recordarme</label>
+                </div>
+                <a href="#" class="forgot-password">¿Olvidaste tu contraseña?</a>
+            </div>
+
+            <button type="submit" class="btn-primary-custom">
+                <i class="bi bi-box-arrow-in-right"></i> Iniciar Sesión
+            </button>
+        </form>
+              
+    </div>
+
+    <script>
+        // Credenciales genéricas para pruebas (esto debería estar en el backend)
+        const USUARIOS_PRUEBA = [
+            { usuario: 'admin', password: 'admin123', nombre: 'Administrador' },
+            { usuario: 'patico', password: 'patico2024', nombre: 'Usuario Patico' },
+            { usuario: 'vendedor', password: 'venta123', nombre: 'Vendedor' }
+        ];
+
+        function mostrarAlerta(mensaje, tipo) {
+            const alertError = document.getElementById('alertError');
+            const alertSuccess = document.getElementById('alertSuccess');
+            
+            if (tipo === 'error') {
+                alertError.textContent = mensaje;
+                alertError.style.display = 'block';
+                alertSuccess.style.display = 'none';
+                
+                setTimeout(() => {
+                    alertError.style.display = 'none';
+                }, 4000);
+            } else if (tipo === 'success') {
+                alertSuccess.textContent = mensaje;
+                alertSuccess.style.display = 'block';
+                alertError.style.display = 'none';
+            }
+        }
+
+        async function handleLogin(event) {
+            event.preventDefault();
+            
+            const usuario = document.getElementById('usuario').value.trim();
+            const password = document.getElementById('password').value;
+            const recordar = document.getElementById('remember').checked;
+
+            // Validar que los campos no estén vacíos
+            if (!usuario || !password) {
+                mostrarAlerta('Por favor completa todos los campos', 'error');
+                return;
+            }
+
+            // OPCIÓN 1: Validación local (para pruebas sin backend)
+            const usuarioValido = USUARIOS_PRUEBA.find(
+                u => u.usuario === usuario && u.password === password
+            );
+
+            if (usuarioValido) {
+                mostrarAlerta('¡Inicio de sesión exitoso! Redirigiendo...', 'success');
+                
+                // Guardar sesión en localStorage
+                const sessionData = {
+                    usuario: usuarioValido.usuario,
+                    nombre: usuarioValido.nombre,
+                    loginTime: new Date().toISOString(),
+                    recordar: recordar
+                };
+                
+                localStorage.setItem('paticoSession', JSON.stringify(sessionData));
+                
+                // Redirigir después de 1 segundo
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1000);
+                
+                return;
+            }
+
+            // OPCIÓN 2: Validación con backend (descomentar cuando tengas el backend funcionando)
+            /*
+            try {
+                const res = await fetch('http://localhost:3000/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ usuario, password })
+                });
+
+                const data = await res.json();
+                
+                if (res.ok && data.success) {
+                    mostrarAlerta('¡Inicio de sesión exitoso! Redirigiendo...', 'success');
+                    
+                    // Guardar sesión
+                    const sessionData = {
+                        usuario: data.usuario,
+                        nombre: data.nombre,
+                        token: data.token,
+                        loginTime: new Date().toISOString(),
+                        recordar: recordar
+                    };
+                    
+                    localStorage.setItem('paticoSession', JSON.stringify(sessionData));
+                    
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 1000);
+                } else {
+                    mostrarAlerta(data.message || 'Credenciales inválidas', 'error');
+                }
+            } catch (err) {
+                console.error('Error al conectar con el backend:', err);
+                mostrarAlerta('No se pudo conectar con el servidor', 'error');
+            }
+            */
+
+            // Si llegamos aquí, las credenciales son inválidas
+            mostrarAlerta('Usuario o contraseña incorrectos', 'error');
+        }
+
+        // Limpiar alertas al escribir
+        document.getElementById('usuario').addEventListener('input', () => {
+            document.getElementById('alertError').style.display = 'none';
+        });
+
+        document.getElementById('password').addEventListener('input', () => {
+            document.getElementById('alertError').style.display = 'none';
+        });
+
+        // Verificar si ya hay sesión activa
+        window.addEventListener('DOMContentLoaded', () => {
+            const session = localStorage.getItem('paticoSession');
+            if (session) {
+                const sessionData = JSON.parse(session);
+                
+                // Verificar si quiere ser recordado o si la sesión es reciente (menos de 24 horas)
+                const loginTime = new Date(sessionData.loginTime);
+                const now = new Date();
+                const hoursDiff = (now - loginTime) / (1000 * 60 * 60);
+                
+                if (sessionData.recordar || hoursDiff < 24) {
+                    mostrarAlerta('Ya tienes una sesión activa. Redirigiendo...', 'success');
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 1000);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patico Detalles - Sistema de Inventario</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../css/estilos.css">
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+    <main class="p-4">
+        <div class="content-box">
+            <h2 class="page-title">
+                <i class="bi bi-cart-check"></i> Punto de Venta
+            </h2>
+
+            <!-- Búsqueda de Producto -->
+            <div class="search-section">
+                <h4 style="color: #8b6b6b; margin-bottom: 20px;">
+                    <i class="bi bi-search"></i> Buscar Producto
+                </h4>
+                <div class="row">
+                    <div class="col-md-8 mb-3">
+                        <label class="form-label">Buscar por nombre o código de barras</label>
+                        <input type="text" class="form-control" id="searchProduct" 
+                               placeholder="Escribe el nombre o escanea código de barras...">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">&nbsp;</label>
+                        <button class="btn btn-primary-custom w-100" onclick="buscarProducto()">
+                            <i class="bi bi-search"></i> Buscar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lista de Productos en la Venta -->
+            <div class="cart-section">
+                <h4 style="color: #8b6b6b; margin-bottom: 20px;">
+                    <i class="bi bi-cart3"></i> Productos en la Venta
+                </h4>
+                <div id="cartItems">
+                    <div class="empty-cart">
+                        <i class="bi bi-cart-x"></i>
+                        <p style="font-size: 18px; font-weight: 600;">No hay productos en la venta</p>
+                        <p>Busca y agrega productos para comenzar</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Agregar después de la sección del carrito y antes del total -->
+            <div class="payment-section">
+                <h4 style="color: #8b6b6b; margin-bottom: 20px;">
+                    <i class="bi bi-person"></i> Información del Cliente
+                </h4>
+                <div class="row">
+                    <div class="col-md-12 mb-3">
+                        <label class="form-label">Nombre del Cliente <span class="required">*</span></label>
+                        <input type="text" class="form-control" id="nombreCliente" 
+                               placeholder="Ingrese el nombre del cliente" required>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección de Totales -->
+            <div class="total-section">
+                <div class="total-row">
+                    <span class="total-label">Subtotal:</span>
+                    <span class="total-value">$<span id="subtotal">0</span></span>
+                </div>
+                <div class="total-row">
+                    <span class="total-label">IVA (19%):</span>
+                    <span class="total-value">$<span id="iva">0</span></span>
+                </div>
+                <div class="total-row">
+                    <span class="total-label" style="font-size: 24px;">Total:</span>
+                    <span class="total-value" style="font-size: 32px; color: #c49999;">$<span id="total">0</span></span>
+                </div>
+            </div>
+
+            <!-- Pago -->
+            <div class="payment-section">
+                <h4 style="color: #8b6b6b; margin-bottom: 20px;">
+                    <i class="bi bi-cash-coin"></i> Información de Pago
+                </h4>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Efectivo Recibido <span class="required">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text" style="background: #fff9fa; border: 2px solid #f0e6e8;">$</span>
+                            <input type="number" class="form-control" id="efectivoRecibido" 
+                                   placeholder="0" step="1000" oninput="calcularCambio()">
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Cambio</label>
+                        <div class="info-badge">
+                            <div class="info-badge-title">A devolver</div>
+                            <div class="info-badge-value">$<span id="cambio">0</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botones de Acción -->
+            <div class="btn-group-custom">
+                <button class="btn btn-danger-custom" onclick="cancelarVenta()">
+                    <i class="bi bi-x-circle"></i> Cancelar Venta
+                </button>
+                <button class="btn btn-secondary-custom" onclick="realizarVenta()">
+                    <i class="bi bi-check-circle"></i> Realizar Venta
+                </button>
+                <button class="btn btn-primary-custom" onclick="generarFactura()">
+                    <i class="bi bi-file-earmark-pdf"></i> Generar Factura PDF
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Añadir modal de alerta de stock bajo -->
+    <div class="modal-overlay" id="modalAlertaStock">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3 class="modal-title" style="color: #dc3545;">
+                    <i class="bi bi-exclamation-triangle-fill"></i> Alerta de Stock
+                </h3>
+                <button class="btn-close-modal" onclick="closeModal('modalAlertaStock')">×</button>
+            </div>
+            <div id="alertaStockContent" style="color: #6b5454; font-size: 16px;">
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+	// Acceso seguro al DOM
+	function el(id) {
+		return document.getElementById(id) || null;
+	}
+
+	let inventario = [];
+	let carrito = [];
+	let productoAEliminar = null;
+
+	async function loadInventory() {
+		try {
+			const res = await fetch('http://localhost:3000/api/inventory');
+			if (!res.ok) throw new Error('Error cargando inventario');
+			const data = await res.json();
+			// mapear a la estructura que usa el frontend: { codigo, nombre, precio, stock }
+			inventario = data.map(p => ({
+				codigo: p.codigo,
+				nombre: p.nombre,
+				precio: Number(p.precio_venta || p.costo_unit || 0),
+				stock: Number(p.cantidad_actual || 0),
+				_raw: p // mantener el objeto original si hace falta
+			}));
+			console.log('Inventario cargado', inventario);
+		} catch (err) {
+			console.error('No se pudo cargar inventario:', err);
+			// mantener inventario vacío para fallback
+		}
+	}
+
+	// Buscar producto por código o por nombre usando el inventario cargado
+	async function buscarProducto() {
+		const busqueda = document.getElementById('searchProduct').value.trim().toLowerCase();
+		if (!busqueda) {
+			alert('Ingresa nombre o código a buscar');
+			return;
+		}
+
+		// Asegurar que el inventario esté cargado
+		if (inventario.length === 0) {
+			await loadInventory();
+		}
+
+		// Buscar por código (contain) primero
+		let producto = inventario.find(p => p.codigo && p.codigo.toLowerCase().includes(busqueda));
+
+		// Si no hay por código, buscar por nombre
+		if (!producto) {
+			producto = inventario.find(p => p.nombre && p.nombre.toLowerCase().includes(busqueda));
+			// Si coincide por nombre, su 'stock' viene ya de tdinventario (cantidad_actual) porque el endpoint lo combina
+		}
+
+		if (producto) {
+			agregarAlCarrito(producto);
+			document.getElementById('searchProduct').value = '';
+		} else {
+			alert('❌ Producto no encontrado en el inventario');
+		}
+	}
+
+	function agregarAlCarrito(producto) {
+		const itemExistente = carrito.find(item => item.codigo === producto.codigo);
+		const stockDisponible = producto.stock || 0;
+
+		if (itemExistente) {
+			if (itemExistente.cantidad < stockDisponible) {
+				itemExistente.cantidad++;
+			} else {
+				alert(`⚠️ No hay más stock disponible de ${producto.nombre}`);
+				return;
+			}
+		} else {
+			if (stockDisponible <= 0) {
+				alert(`⚠️ No hay stock disponible de ${producto.nombre}`);
+				return;
+			}
+			carrito.push({
+				codigo: producto.codigo,
+				nombre: producto.nombre,
+				precio: producto.precio,
+				stock: stockDisponible,
+				cantidad: 1
+			});
+		}
+
+		renderizarCarrito();
+		calcularTotales();
+	}
+
+	function renderizarCarrito() {
+		const contenedor = document.getElementById('cartItems');
+		if (!contenedor) return;
+
+		contenedor.innerHTML = ''; // Limpiar contenido anterior
+
+		if (carrito.length === 0) {
+			contenedor.innerHTML = `
+				<div class="empty-cart">
+					<i class="bi bi-cart-x"></i>
+					<p style="font-size: 18px; font-weight: 600;">No hay productos en la venta</p>
+					<p>Busca y agrega productos para comenzar</p>
+				</div>
+			`;
+			return;
+		}
+
+		carrito.forEach((item, index) => {
+			const elItem = document.createElement('div');
+			elItem.className = 'product-item';
+			elItem.innerHTML = `
+				<div class="product-info">
+					<div class="product-name">${item.nombre}</div>
+					<div class="product-code">Código: ${item.codigo}</div>
+				</div>
+				<div class="quantity-control">
+					<button class="btn btn-secondary-custom btn-sm" onclick="actualizarCantidad(${index}, ${item.cantidad - 1})">
+						<i class="bi bi-dash"></i>
+					</button>
+					<input type="number" class="quantity-input" value="${item.cantidad}" 
+						   onchange="actualizarCantidad(${index}, this.value)" min="1" max="${item.stock}">
+					<button class="btn btn-secondary-custom btn-sm" onclick="actualizarCantidad(${index}, ${item.cantidad + 1})">
+						<i class="bi bi-plus"></i>
+					</button>
+				</div>
+				<div class="product-price">$${(item.precio * item.cantidad).toFixed(2)}</div>
+				<button class="btn btn-danger-custom btn-sm" onclick="eliminarDelCarrito(${index})">
+					<i class="bi bi-trash"></i>
+				</button>
+			`;
+
+			contenedor.appendChild(elItem);
+		});
+	}
+
+        function actualizarCantidad(index, valor) {
+            const cantidad = parseInt(valor);
+            const item = carrito[index];
+            
+            if (cantidad <= 0) {
+                eliminarDelCarrito(index);
+            } else if (cantidad <= item.stock) {
+                item.cantidad = cantidad;
+                renderizarCarrito();
+                calcularTotales();
+            } else {
+                alert(`⚠️ Stock máximo disponible: ${item.stock} unidades`);
+                renderizarCarrito();
+            }
+        }
+
+        function eliminarDelCarrito(index) {
+            carrito.splice(index, 1);
+            renderizarCarrito();
+            calcularTotales();
+        }
+
+        function calcularTotales() {
+            const subtotal = carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+            const iva = Math.round(subtotal * 0.19);
+            const total = subtotal + iva;
+
+            const elSubtotal = el('subtotal');
+            const elIva = el('iva');
+            const elTotal = el('total');
+
+            if (elSubtotal) elSubtotal.textContent = subtotal.toLocaleString();
+            if (elIva) elIva.textContent = iva.toLocaleString();
+            if (elTotal) elTotal.textContent = total.toLocaleString();
+
+            calcularCambio();
+        }
+
+        function calcularCambio() {
+            const elTotal = el('total');
+            const elCambio = el('cambio');
+            const elEfectivo = el('efectivoRecibido');
+
+            const total = elTotal ? parseFloat((elTotal.textContent || '0').replace(/,/g, '')) || 0 : 0;
+            const efectivo = elEfectivo ? (parseFloat(elEfectivo.value) || 0) : 0;
+            const cambio = Math.max(0, efectivo - total);
+
+            if (elCambio) elCambio.textContent = cambio.toLocaleString();
+
+            const infoTitle = elCambio && elCambio.parentElement ? elCambio.parentElement.querySelector('.info-badge-title') : null;
+            if (infoTitle) {
+                if (efectivo > 0 && efectivo < total) {
+                    infoTitle.textContent = 'Falta';
+                    if (elCambio) elCambio.style.color = '#dc3545';
+                } else {
+                    infoTitle.textContent = 'A devolver';
+                    if (elCambio) elCambio.style.color = '#8b6b6b';
+                }
+            }
+        }
+
+        async function generarFacturaPDF() {
+            const { jsPDF } = window.jspdf || {};
+            if (!jsPDF) throw new Error('jsPDF no disponible');
+            
+            // Formato ticket 58mm (aprox 165 puntos) - más pequeño
+            const doc = new jsPDF({
+                unit: 'pt',
+                format: [165, 300] // ancho más pequeño
+            });
+
+            const numeroFactura = `${Date.now()}`.slice(-10);
+            const fecha = new Date().toLocaleDateString('es-CO');
+            const hora = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+            const nombreCliente = el('nombreCliente') ? el('nombreCliente').value : '';
+
+            let y = 15;
+            const centerX = 82.5; // centro del ticket
+
+            // Encabezado - Nombre del negocio
+            doc.setFontSize(11);
+            doc.setFont(undefined, 'bold');
+            doc.text('Patico Detalles', centerX, y, { align: 'center' });
+            y += 12;
+
+            // NIT y datos del negocio
+            doc.setFontSize(7);
+            doc.setFont(undefined, 'normal');
+            doc.text('NIT: 900480556-1', centerX, y, { align: 'center' });
+            y += 8;
+            doc.text('Comprobante de entrega', centerX, y, { align: 'center' });
+            y += 12;
+
+            // Línea separadora
+            doc.line(8, y, 157, y);
+            y += 8;
+
+            // Información de la venta
+            doc.setFontSize(7);
+            doc.text(`Cliente: ${nombreCliente}`, 8, y);
+            y += 9;
+            doc.text(`Fecha: ${fecha} ${hora}`, 8, y);
+            y += 9;
+            doc.text(`Factura: ${numeroFactura}`, 8, y);
+            y += 12;
+
+            // Encabezado de artículos
+            doc.line(8, y, 157, y);
+            y += 8;
+            doc.setFontSize(6);
+            doc.text('Articulo', 8, y);
+            doc.text('Descripcion', 45, y);
+            doc.text('Valor', 135, y);
+            y += 8;
+            doc.line(8, y, 157, y);
+            y += 8;
+
+            // Productos
+            doc.setFontSize(6);
+            carrito.forEach(item => {
+                const codigo = item.codigo.slice(0, 12);
+                const cantidad = item.cantidad;
+                const nombre = item.nombre.slice(0, 18);
+                const totalItem = item.precio * item.cantidad;
+
+                // Código del artículo
+                doc.text(codigo, 8, y);
+                y += 8;
+                
+                // Descripción con cantidad
+                doc.text(`${nombre}`, 8, y);
+                doc.text(`${cantidad}`, 125, y);
+                doc.text(`${(totalItem / 1000).toFixed(1)} G`, 145, y, { align: 'right' });
+                y += 10;
+            });
+
+            // Línea antes del total
+            y += 3;
+            doc.line(8, y, 157, y);
+            y += 10;
+
+            // Total
+            const subtotal = carrito.reduce((s, it) => s + (it.precio * it.cantidad), 0);
+            const iva = Math.round(subtotal * 0.19);
+            const total = subtotal + iva;
+
+            doc.setFontSize(8);
+            doc.setFont(undefined, 'bold');
+            doc.text('Total', 8, y);
+            doc.text(`: ${(total / 1000).toFixed(3).replace('.', ' ')}`, 135, y, { align: 'right' });
+            y += 12;
+
+            // Efectivo y cambio
+            const efectivoEl = el('efectivoRecibido');
+            const efectivo = efectivoEl ? (parseFloat(efectivoEl.value) || 0) : 0;
+            const cambio = Math.max(0, efectivo - total);
+
+            doc.setFont(undefined, 'normal');
+            doc.setFontSize(7);
+            doc.text(`Efectivo`, 8, y);
+            doc.text(`${(efectivo / 1000).toFixed(3).replace('.', ' ')}`, 135, y, { align: 'right' });
+            y += 9;
+            doc.text(`Cambio:`, 8, y);
+            doc.text(`${(cambio / 1000).toFixed(3).replace('.', ' ')}`, 135, y, { align: 'right' });
+            y += 12;
+
+            // Artículos vendidos
+            doc.text(`Articulos Vendidos: ${carrito.length}`, 8, y);
+            y += 15;
+
+            // Pie de página
+            doc.line(8, y, 157, y);
+            y += 10;
+            doc.setFontSize(8);
+            doc.setFont(undefined, 'bold');
+            doc.text('¡Gracias por su compra!', centerX, y, { align: 'center' });
+            y += 8;
+            doc.setFont(undefined, 'normal');
+            doc.setFontSize(6);
+            doc.text('Vuelva pronto', centerX, y, { align: 'center' });
+
+            return doc;
+        }
+        
+        async function realizarVenta() {
+            if (carrito.length === 0) { alert('⚠️ No hay productos en la venta'); return; }
+
+            const nombreClienteEl = el('nombreCliente');
+            const nombreCliente = nombreClienteEl ? nombreClienteEl.value.trim() : '';
+            if (!nombreCliente) { alert('⚠️ Ingrese el nombre del cliente'); return; }
+
+            const totalEl = el('total');
+            const efectivoEl = el('efectivoRecibido');
+
+            const total = totalEl ? (parseFloat((totalEl.textContent || '0').replace(/,/g, '')) || 0) : 0;
+            const efectivo = efectivoEl ? (parseFloat(efectivoEl.value) || 0) : 0;
+            if (efectivo < total) { alert('⚠️ El efectivo recibido es insuficiente'); return; }
+
+            try {
+                const doc = await generarFacturaPDF();
+                const dataUrl = doc.output('datauristring');
+                const pdfBase64 = dataUrl.split(',')[1];
+
+                const productosVendidos = carrito.map(item => ({ codigo: item.codigo, cantidad: item.cantidad }));
+
+                const venta = {
+                    nombre: nombreCliente,
+                    fecha_venta: new Date().toISOString().split('T')[0],
+                    archivo: pdfBase64,
+                    total_venta: total,
+                    productos: productosVendidos
+                };
+
+                const res = await fetch('http://localhost:3000/api/venta', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(venta)
+                });
+                const data = await res.json();
+
+                if (res.ok && data.success) {
+                    alert(`✅ Venta realizada!\nFactura N°: ${data.pknum_factura}\nTotal: $${total.toLocaleString()}`);
+                    carrito = [];
+                    renderizarCarrito();
+                    calcularTotales();
+                    if (efectivoEl) efectivoEl.value = '';
+                    if (nombreClienteEl) nombreClienteEl.value = '';
+                } else {
+                    console.error('Error guardando venta:', data);
+                    throw new Error(data.message || data.error || 'Error al guardar la venta');
+                }
+            } catch (err) {
+                console.error('Error completo:', err);
+                alert('❌ Error al procesar la venta: ' + (err.message || err));
+            }
+        }
+
+        // Listener para generar PDF manualmente (opcional)
+        function generarFactura() {
+            generarFacturaPDF().then(doc => {
+                const dataUrl = doc.output('datauristring');
+                const blob = fetch(dataUrl).then(r => r.blob()).then(b => {
+                    const url = URL.createObjectURL(b);
+                    window.open(url, '_blank');
+                });
+            }).catch(err => {
+                console.error(err);
+                alert('No se pudo generar la factura PDF');
+            });
+        }
+
+        // Inicializaciones cuando DOM está listo
+        document.addEventListener('DOMContentLoaded', () => {
+            loadInventory();
+            const searchEl = el('searchProduct');
+            if (searchEl) searchEl.addEventListener('keypress', function(e) { if (e.key === 'Enter') buscarProducto(); });
+        });
+    </script>
+     <div id="footer-placeholder"></div>
+
+    <script>
+        // includeHTML: carga el <head> (estilos) y el <body> del archivo y ejecuta scripts dentro
+        async function includeHTML(url, selector){
+            try{
+                const res = await fetch(url);
+                if(!res.ok) throw new Error('HTTP ' + res.status);
+                const text = await res.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(text, 'text/html');
+                const container = document.querySelector(selector);
+                if(!container) return;
+                // Inyectar <link rel="stylesheet"> y <style> del head (si no existen ya)
+                try{
+                    const existingHrefs = Array.from(document.head.querySelectorAll('link[rel="stylesheet"]')).map(l=>l.href);
+                    Array.from(doc.head.querySelectorAll('link[rel="stylesheet"]')).forEach(link => {
+                        try{
+                            const href = link.href || link.getAttribute('href');
+                            if(href && !existingHrefs.includes(href)){
+                                const n = document.createElement('link');
+                                n.rel = 'stylesheet';
+                                if(link.href) n.href = link.href;
+                                else if(link.getAttribute('href')) n.href = link.getAttribute('href');
+                                document.head.appendChild(n);
+                                existingHrefs.push(n.href);
+                            }
+                        }catch(_){}
+                    });
+                    Array.from(doc.head.querySelectorAll('style')).forEach(s => {
+                        const clone = document.createElement('style');
+                        clone.textContent = s.textContent;
+                        document.head.appendChild(clone);
+                    });
+                }catch(e){ console.warn('includeHTML: head injection failed', e); }
+
+                container.innerHTML = '';
+                Array.from(doc.body.childNodes).forEach(node => {
+                    if(node.tagName && node.tagName.toLowerCase() === 'script') return;
+                    container.appendChild(document.importNode(node, true));
+                });
+                const scripts = doc.querySelectorAll('script');
+                for(const s of scripts){
+                    if(s.src){
+                        await new Promise((resolve)=>{
+                            const newScript = document.createElement('script');
+                            newScript.src = s.src;
+                            newScript.async = false;
+                            newScript.onload = () => resolve();
+                            newScript.onerror = () => resolve();
+                            document.head.appendChild(newScript);
+                        });
+                    } else {
+                        const newScript = document.createElement('script');
+                        newScript.textContent = s.textContent;
+                        container.appendChild(newScript);
+                    }
+                }
+            }catch(e){ console.error('includeHTML', e); }
+        }
+        document.addEventListener('DOMContentLoaded', ()=>{
+            includeHTML('header.html', '#header-placeholder');
+            includeHTML('footer.html', '#footer-placeholder');
+        });
+    </script>
+</body>
+</html>

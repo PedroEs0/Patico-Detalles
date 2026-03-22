@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patico Detalles - Sistema de Inventario</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../css/estilos.css">
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="header-placeholder"></div>
+    <main class="p-4">
+        <div class="content-box">
+            <h2 class="page-title">
+                <i class="bi bi-box-arrow-in-down"></i> Reabastecer Inventario
+            </h2>
+
+            <!-- Alerta de stock bajo -->
+            <div id="alertaStockBajo" class="alert-warning-custom">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <strong>Advertencia:</strong> Este producto tiene menos de 10 unidades en stock.
+            </div>
+
+            <form id="inventoryForm">
+                <div class="row">
+                    <!-- Código -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Código <span class="required">*</span></label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="codigo" placeholder="Ej: PROD-001" required>
+                            <button class="btn btn-secondary-custom" type="button" onclick="generarCodigo()">
+                                <i class="bi bi-arrow-repeat"></i> Auto
+                            </button>
+                        </div>
+                        <small class="text-muted">Ingresa el código o genera uno automático</small>
+                    </div>
+
+                    <!-- Categoría -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Categoría <span class="required">*</span></label>
+                        <select class="form-select" id="categoria" required>
+                            <option value="">Seleccionar categoría</option>
+                            <option value="accesorios">Accesorios</option>
+                            <option value="decoracion">Decoración</option>
+                            <option value="regalos">Regalos</option>
+                            <option value="papeleria">Papelería</option>
+                            <option value="otros">Otros</option>
+                        </select>
+                    </div>
+
+                    <!-- Nombre / Artículo -->
+                    <div class="col-md-12 mb-3">
+                        <label class="form-label">Nombre del Artículo <span class="required">*</span></label>
+                        <input type="text" class="form-control" id="nombre" placeholder="Ej: Llavero personalizado" required>
+                    </div>
+
+                    <!-- Foto del producto -->
+                    <div class="col-md-12 mb-3">
+                        <label class="form-label">Foto del Producto</label>
+                        <div class="photo-upload" id="photoUploadArea">
+                            <i class="bi bi-cloud-upload"></i>
+                            <p class="mb-0" style="color: #8b6b6b;">Haz clic para subir o cargar una foto</p>
+                            <small style="color: #a58585;">JPG, PNG o WEBP (máx. 5MB)</small>
+                            <input type="file" id="fotoArchivo" accept="image/*" style="display: none;" onchange="previsualizarFoto(event)">
+                            <img id="preview" class="photo-preview" alt="Vista previa">
+                        </div>
+                        <div class="photo-actions" id="photoActions">
+                            <button type="button" class="btn btn-sm btn-secondary-custom btn-sm-custom" onclick="cargarOtraFoto()">
+                                <i class="bi bi-upload"></i> Cargar otra
+                            </button>
+                            <button type="button" class="btn btn-sm btn-secondary-custom btn-sm-custom" onclick="tomarFoto()">
+                                <i class="bi bi-camera"></i> Tomar foto
+                            </button>
+                            <button type="button" class="btn btn-sm btn-danger-custom btn-sm-custom" onclick="eliminarFoto()">
+                                <i class="bi bi-trash"></i> Eliminar
+                            </button>
+                        </div>
+                    </div>
+
+                    <hr class="section-divider">
+
+                    <!-- Fecha de adquisición -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Fecha de Adquisición <span class="required">*</span></label>
+                        <input type="date" class="form-control" id="fechaAdquisicion" required>
+                    </div>
+
+                    <!-- Fecha de vencimiento -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Fecha de Vencimiento (si aplica)</label>
+                        <input type="date" class="form-control" id="fechaVencimiento">
+                        <small class="text-muted">Deja vacío si el producto no tiene vencimiento</small>
+                    </div>
+
+                    <!-- Comprobado por -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Comprobado por</label>
+                        <input type="text" class="form-control" id="comprobadoPor" placeholder="Nombre del responsable">
+                    </div>
+
+                    <!-- Proveedor -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Proveedor <span class="required">*</span></label>
+                        <input type="text" class="form-control" id="proveedor" placeholder="Ej: Distribuidora XYZ" required>
+                    </div>
+
+                    <hr class="section-divider">
+
+                    <!-- Precio unitario -->
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Precio Unitario <span class="required">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text" style="background: #fff9fa; border: 2px solid #f0e6e8; color: #8b6b6b;">$</span>
+                            <input type="number" class="form-control" id="precioUnitario" placeholder="0.00" step="0.01" min="0" required oninput="calcularTotal()">
+                        </div>
+                    </div>
+
+                    <!-- Cantidad -->
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Cantidad <span class="required">*</span></label>
+                        <input type="number" class="form-control" id="cantidad" placeholder="0" min="1" required oninput="calcularTotal(); verificarStock()">
+                        <div id="stockInfo" style="margin-top: 5px;"></div>
+                    </div>
+
+                    <!-- Costo total -->
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Costo Total</label>
+                        <div class="info-badge">
+                            <div class="info-badge-title">Total calculado</div>
+                            <div class="info-badge-value">$<span id="costoTotal">0.00</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Notas -->
+                    <div class="col-md-12 mb-3">
+                        <label class="form-label">Notas</label>
+                        <textarea class="form-control" id="notas" rows="3" placeholder="Observaciones adicionales sobre el producto..."></textarea>
+                    </div>
+
+                    <!-- Fecha y hora de última actualización -->
+                    <div class="col-md-12 mb-3">
+                        <div class="info-badge">
+                            <div class="info-badge-title"><i class="bi bi-clock-history"></i> Última actualización</div>
+                            <div class="info-badge-value" id="ultimaActualizacion">--</div>
+                        </div>
+                    </div>
+
+                    <!-- Botones de acción -->
+                    <div class="col-md-12 mt-4">
+                        <div class="action-buttons justify-content-end">
+                            <button type="button" class="btn btn-danger-custom" onclick="eliminarProducto()" id="btnEliminar" style="display: none;">
+                                <i class="bi bi-trash"></i> Eliminar Producto
+                            </button>
+                            <button type="button" class="btn btn-secondary-custom" onclick="limpiarFormulario()">
+                                <i class="bi bi-x-circle"></i> Limpiar
+                            </button>
+                            <button type="submit" class="btn btn-primary-custom" id="btnGuardar">
+                                <i class="bi bi-check-circle"></i> Guardar Producto
+                            </button>
+                            <button type="button" class="btn btn-primary-custom" onclick="modificarProducto()" id="btnModificar" style="display: none;">
+                                <i class="bi bi-pencil"></i> Modificar Producto
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let modoEdicion = false;
+        let productoActual = null;
+        let fotoActual = null;
+
+        function generarCodigo() {
+            const fecha = new Date();
+            const codigo = `PROD-${fecha.getFullYear()}${String(fecha.getMonth() + 1).padStart(2, '0')}${String(fecha.getDate()).padStart(2, '0')}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
+            document.getElementById('codigo').value = codigo;
+        }
+
+        function previsualizarFoto(event) {
+            const file = event.target.files[0];
+            if (file) {
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('⚠️ El archivo es demasiado grande. Máximo 5MB.');
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    fotoActual = e.target.result;
+                    const preview = document.getElementById('preview');
+                    preview.src = fotoActual;
+                    preview.style.display = 'block';
+                    document.getElementById('photoActions').style.display = 'flex';
+                    document.querySelector('.photo-upload i').style.display = 'none';
+                    document.querySelector('.photo-upload p').style.display = 'none';
+                    document.querySelector('.photo-upload small').style.display = 'none';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function cargarOtraFoto() {
+            document.getElementById('fotoArchivo').click();
+        }
+
+        function tomarFoto() {
+            alert('📸 Funcionalidad de cámara en desarrollo.\nPor ahora, usa "Cargar otra" para subir desde archivo.');
+        }
+
+        function eliminarFoto() {
+            if (confirm('¿Estás seguro de eliminar la foto actual?')) {
+                fotoActual = null;
+                document.getElementById('preview').style.display = 'none';
+                document.getElementById('preview').src = '';
+                document.getElementById('fotoArchivo').value = '';
+                document.getElementById('photoActions').style.display = 'none';
+                document.querySelector('.photo-upload i').style.display = 'block';
+                document.querySelector('.photo-upload p').style.display = 'block';
+                document.querySelector('.photo-upload small').style.display = 'block';
+            }
+        }
+
+        document.getElementById('photoUploadArea').addEventListener('click', function(e) {
+            if (!fotoActual && e.target.id !== 'preview') {
+                document.getElementById('fotoArchivo').click();
+            }
+        });
+
+        function calcularTotal() {
+            const precio = parseFloat(document.getElementById('precioUnitario').value) || 0;
+            const cantidad = parseInt(document.getElementById('cantidad').value) || 0;
+            const total = precio * cantidad;
+            document.getElementById('costoTotal').textContent = total.toFixed(2);
+        }
+
+        function verificarStock() {
+            const cantidad = parseInt(document.getElementById('cantidad').value) || 0;
+            const alertaStockBajo = document.getElementById('alertaStockBajo');
+            const stockInfo = document.getElementById('stockInfo');
+            
+            if (cantidad < 10) {
+                alertaStockBajo.style.display = 'block';
+                stockInfo.innerHTML = `<span class="stock-badge stock-low"><i class="bi bi-exclamation-circle"></i> Stock bajo</span>`;
+            } else {
+                alertaStockBajo.style.display = 'none';
+                stockInfo.innerHTML = `<span class="stock-badge stock-ok"><i class="bi bi-check-circle"></i> Stock adecuado</span>`;
+            }
+        }
+
+        function actualizarFechaHora() {
+            if (confirm('¿Estás seguro de limpiar el formulario? Se perderán todos los datos no guardados.')) {
+                document.getElementById('inventoryForm').reset();
+                eliminarFoto();
+                document.getElementById('costoTotal').textContent = '0.00';
+                document.getElementById('ultimaActualizacion').textContent = '--';
+                document.getElementById('alertaStockBajo').style.display = 'none';
+                document.getElementById('stockInfo').innerHTML = '';
+                modoEdicion = false;
+                productoActual = null;
+                document.getElementById('btnGuardar').style.display = 'inline-block';
+                document.getElementById('btnModificar').style.display = 'none';
+                document.getElementById('btnEliminar').style.display = 'none';
+            }
+        }
+
+        function modificarProducto() {
+            if (confirm('¿Confirmas los cambios realizados al producto?')) {
+                productoActual = obtenerDatosFormulario();
+                actualizarFechaHora();
+                console.log('Producto modificado:', productoActual);
+                alert('✅ Producto modificado exitosamente!');
+            }
+        }
+
+        function eliminarProducto() {
+            if (confirm('⚠️ ¿Estás seguro de eliminar este producto?\nEsta acción no se puede deshacer.')) {
+                console.log('Producto eliminado:', productoActual);
+                alert('🗑️ Producto eliminado del inventario.');
+                limpiarFormulario();
+            }
+        }
+
+        function obtenerDatosFormulario() {
+            return {
+                codigo: document.getElementById('codigo').value,
+                categoria: document.getElementById('categoria').value,
+                nombre: document.getElementById('nombre').value,
+                foto: fotoActual,
+                fechaAdquisicion: document.getElementById('fechaAdquisicion').value,
+                fechaVencimiento: document.getElementById('fechaVencimiento').value,
+                comprobadoPor: document.getElementById('comprobadoPor').value,
+                proveedor: document.getElementById('proveedor').value,
+                precioUnitario: document.getElementById('precioUnitario').value,
+                cantidad: document.getElementById('cantidad').value,
+                costoTotal: document.getElementById('costoTotal').textContent,
+                notas: document.getElementById('notas').value,
+                ultimaActualizacion: document.getElementById('ultimaActualizacion').textContent
+            };
+        }
+
+        document.getElementById('inventoryForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            // Preparar datos
+            productoActual = obtenerDatosFormulario();
+            productoActual.foto = fotoActual; // base64 o null
+            try {
+                const res = await fetch('http://localhost:3000/api/product', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(productoActual)
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    actualizarFechaHora();
+                    modoEdicion = true;
+                    document.getElementById('btnGuardar').style.display = 'none';
+                    document.getElementById('btnModificar').style.display = 'inline-block';
+                    document.getElementById('btnEliminar').style.display = 'inline-block';
+                    alert('✅ Producto guardado en la base de datos.');
+                } else {
+                    console.error(data);
+                    alert('❌ Error al guardar: ' + (data.message || data.error || 'Servidor'));
+                }
+            } catch (err) {
+                console.error(err);
+                alert('❌ No se pudo conectar con el servidor.');
+            }
+         });
+
+        // Establecer fecha actual por defecto
+        const today = new Date();
+        const offset = today.getTimezoneOffset();
+        today.setMinutes(today.getMinutes() - offset);
+        document.getElementById('fechaAdquisicion').value = today.toISOString().split('T')[0];
+    </script>
+    <div id="footer-placeholder"></div>
+
+    <script>
+        // includeHTML: carga el <head> (estilos) y el <body> del archivo y ejecuta scripts dentro
+        async function includeHTML(url, selector){
+            try{
+                const res = await fetch(url);
+                if(!res.ok) throw new Error('HTTP ' + res.status);
+                const text = await res.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(text, 'text/html');
+                const container = document.querySelector(selector);
+                if(!container) return;
+                // Inyectar <link rel="stylesheet"> y <style> del head (si no existen ya)
+                try{
+                    const existingHrefs = Array.from(document.head.querySelectorAll('link[rel="stylesheet"]')).map(l=>l.href);
+                    Array.from(doc.head.querySelectorAll('link[rel="stylesheet"]')).forEach(link => {
+                        try{
+                            const href = link.href || link.getAttribute('href');
+                            if(href && !existingHrefs.includes(href)){
+                                const n = document.createElement('link');
+                                n.rel = 'stylesheet';
+                                if(link.href) n.href = link.href;
+                                else if(link.getAttribute('href')) n.href = link.getAttribute('href');
+                                document.head.appendChild(n);
+                                existingHrefs.push(n.href);
+                            }
+                        }catch(_){}
+                    });
+                    Array.from(doc.head.querySelectorAll('style')).forEach(s => {
+                        const clone = document.createElement('style');
+                        clone.textContent = s.textContent;
+                        document.head.appendChild(clone);
+                    });
+                }catch(e){ console.warn('includeHTML: head injection failed', e); }
+
+                // Vaciar
+                container.innerHTML = '';
+                // Importar nodos del body (sin scripts)
+                Array.from(doc.body.childNodes).forEach(node => {
+                    if(node.tagName && node.tagName.toLowerCase() === 'script') return;
+                    container.appendChild(document.importNode(node, true));
+                });
+                // Ejecutar scripts del documento (inline y externos)
+                const scripts = doc.querySelectorAll('script');
+                for(const s of scripts){
+                    if(s.src){
+                        await new Promise((resolve)=>{
+                            const newScript = document.createElement('script');
+                            newScript.src = s.src;
+                            newScript.async = false;
+                            newScript.onload = () => resolve();
+                            newScript.onerror = () => resolve();
+                            document.head.appendChild(newScript);
+                        });
+                    } else {
+                        const newScript = document.createElement('script');
+                        newScript.textContent = s.textContent;
+                        container.appendChild(newScript);
+                    }
+                }
+            }catch(e){ console.error('includeHTML', e); }
+        }
+        document.addEventListener('DOMContentLoaded', ()=>{
+            includeHTML('header.html', '#header-placeholder');
+            includeHTML('footer.html', '#footer-placeholder');
+        });
+    </script>
+</body>
+</html>

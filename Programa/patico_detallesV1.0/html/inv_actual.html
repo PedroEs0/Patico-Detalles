@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patico Detalles - Sistema de Inventario</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../css/estilos.css">
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="notificaciones.js"></script>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+    <div class="content-box">
+        <h2 class="page-title">
+            <i class="bi bi-box-seam"></i>
+            Inventario Actual
+        </h2>
+
+        <div class="search-bar">
+            <input type="text" class="search-input" placeholder="Buscar por código o nombre..." id="searchInput">
+            <button class="btn-primary-custom" onclick="buscarProducto()">
+                <i class="bi bi-search"></i>
+                Buscar
+            </button>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Nombre</th>
+                        <th>Precio de Venta</th>
+                        <th>Imagen</th>
+                        <th>Cantidad Actual</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="inventoryTable">
+                    <!-- Datos de ejemplo -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal de Detalles -->
+    <div class="modal-overlay" id="modalDetails">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Detalles del Producto</h3>
+                <button class="btn-close-modal" onclick="closeModal('modalDetails')">×</button>
+            </div>
+
+            <img id="modalImage" class="product-img-large" src="" alt="Producto">
+
+            <div class="detail-section">
+                <div class="detail-label">Código del Producto</div>
+                <div class="detail-value" id="modalCodigo"></div>
+            </div>
+
+            <div class="detail-section">
+                <div class="detail-label">Nombre del Artículo</div>
+                <div class="detail-value" id="modalNombre"></div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="detail-section">
+                        <div class="detail-label">Fecha de Adquisición</div>
+                        <div class="detail-value" id="modalFechaAdq"></div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="detail-section">
+                        <div class="detail-label">Fecha de Vencimiento</div>
+                        <div class="detail-value" id="modalFechaVenc"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="detail-section">
+                <div class="detail-label">Proveedor</div>
+                <div class="detail-value" id="modalProveedor"></div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="detail-section">
+                        <div class="detail-label">Costo Unitario</div>
+                        <div class="detail-value" id="modalCostoUnit"></div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="detail-section">
+                        <div class="detail-label">Costo Total</div>
+                        <div class="detail-value" id="modalCostoTotal"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="detail-section">
+                <div class="detail-label">Última Actualización</div>
+                <div class="detail-value" id="modalUltActualizacion"></div>
+            </div>
+
+            <div class="detail-section">
+                <div class="detail-label">Notas Adicionales</div>
+                <div class="detail-value" id="modalNotas"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmación de Eliminación -->
+    <div class="modal-overlay" id="modalConfirmDelete">
+        <div class="modal-content confirm-modal">
+            <div class="modal-header">
+                <h3 class="modal-title"><i class="bi bi-exclamation-triangle-fill" style="color: #dc3545;"></i> Confirmar Eliminación</h3>
+                <button class="btn-close-modal" onclick="closeModal('modalConfirmDelete')">×</button>
+            </div>
+
+            <p style="color: #6b5454; font-size: 16px; line-height: 1.6;">
+                ¿Estás seguro de que deseas eliminar el producto <strong id="deleteProductName"></strong>?
+            </p>
+            <p style="color: #dc3545; font-size: 14px;">
+                <i class="bi bi-info-circle"></i> Esta acción no se puede deshacer.
+            </p>
+
+            <div class="confirm-buttons">
+                <button class="btn-confirm btn-cancel" onclick="closeModal('modalConfirmDelete')">
+                    Cancelar
+                </button>
+                <button class="btn-confirm btn-confirm-delete" onclick="confirmarEliminacion()">
+                    <i class="bi bi-trash"></i> Eliminar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Productos cargados desde backend
+        let productos = [];
+
+        async function loadInventory() {
+            try {
+                const res = await fetch('http://localhost:3000/api/inventory');
+                if (!res.ok) throw new Error('Error cargando inventario');
+                const data = await res.json();
+                // Mapear campos si es necesario
+                productos = data.map(p => ({
+                    id: p.id,
+                    codigo: p.codigo,
+                    nombre: p.nombre,
+                    precioVenta: Number(p.precio_venta) || 0,
+                    imagen: p.imagen || 'https://via.placeholder.com/60',
+                    cantidadActual: Number(p.cantidad_actual) || 0,
+                    fechaAdq: p.fecha_adq || 'N/A',
+                    fechaVenc: p.fecha_venc || 'N/A',
+                    proveedor: p.proveedor || '',
+                    costoUnit: Number(p.costo_unit) || 0,
+                    costoTotal: Number(p.costo_total) || 0,
+                    ultimaActualizacion: p.ultima_actualizacion || '',
+                    notas: p.notas || ''
+                }));
+                renderTable();
+            } catch (err) {
+                console.error(err);
+                alert('No se pudo cargar el inventario desde el servidor.');
+            }
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('inventoryTable');
+            tbody.innerHTML = '';
+
+            productos.forEach(producto => {
+                const stockClass = producto.cantidadActual > 15 ? 'stock-high' : 
+                                  producto.cantidadActual > 5 ? 'stock-medium' : 'stock-low';
+                
+                const row = `
+                    <tr>
+                        <td><strong>${producto.codigo}</strong></td>
+                        <td>${producto.nombre}</td>
+                        <td>$${producto.precioVenta.toLocaleString()}</td>
+                        <td><img src="${producto.imagen}" class="product-img" alt="${producto.nombre}"></td>
+                        <td><span class="stock-badge ${stockClass}">${producto.cantidadActual} unidades</span></td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="btn-action btn-details" onclick='showDetails(${JSON.stringify(producto).replace(/'/g, "&apos;")})'>
+                                    <i class="bi bi-eye"></i> Ver
+                                </button>
+                                <button class="btn-action btn-edit" onclick="editarProducto(${producto.id})">
+                                    <i class="bi bi-pencil"></i> Editar
+                                </button>
+                                <button class="btn-action btn-delete" onclick='prepararEliminacion(${producto.id}, "${producto.nombre}")'>
+                                    <i class="bi bi-trash"></i> Eliminar
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
+
+        function showDetails(producto) {
+            document.getElementById('modalImage').src = producto.imagen;
+            document.getElementById('modalCodigo').textContent = producto.codigo;
+            document.getElementById('modalNombre').textContent = producto.nombre;
+            document.getElementById('modalFechaAdq').textContent = producto.fechaAdq;
+            document.getElementById('modalFechaVenc').textContent = producto.fechaVenc;
+            document.getElementById('modalProveedor').textContent = producto.proveedor;
+            document.getElementById('modalCostoUnit').textContent = '$' + producto.costoUnit.toLocaleString();
+            document.getElementById('modalCostoTotal').textContent = '$' + producto.costoTotal.toLocaleString();
+            document.getElementById('modalUltActualizacion').textContent = producto.ultimaActualizacion;
+            document.getElementById('modalNotas').textContent = producto.notas;
+
+            // Abrir modal y bloquear scroll del body para que la barra quede dentro del modal
+            document.getElementById('modalDetails').classList.add('active');
+            document.body.classList.add('modal-open');
+        }
+
+        function editarProducto(id) {
+            const producto = productos.find(p => p.id === id);
+            if (producto) {
+                // Aquí podrías redirigir a la página de reabastecer con los datos del producto
+                console.log('Editando producto:', producto);
+                alert(`✏️ Redirigiendo a editar: ${producto.nombre}\n\nEn producción, esto abriría el formulario de reabastecer con los datos prellenados.`);
+                
+                // Ejemplo de redirección:
+                // window.location.href = `reabastecer.html?id=${id}`;
+            }
+        }
+
+        function prepararEliminacion(id, nombre) {
+            productoAEliminar = id;
+            document.getElementById('deleteProductName').textContent = nombre;
+            document.getElementById('modalConfirmDelete').classList.add('active');
+        }
+
+        function confirmarEliminacion() {
+            if (productoAEliminar !== null) {
+                productos = productos.filter(p => p.id !== productoAEliminar);
+                renderTable();
+                closeModal('modalConfirmDelete');
+                
+                // Mostrar notificación
+                alert('🗑️ Producto eliminado exitosamente del inventario.');
+                
+                productoAEliminar = null;
+            }
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+            // Asegurarse de quitar la clase que bloquea el scroll del body
+            document.body.classList.remove('modal-open');
+        }
+
+        // Cerrar modales al hacer clic fuera
+        document.querySelectorAll('.modal-overlay').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeModal(this.id);
+                }
+            });
+        });
+
+        function buscarProducto() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const rows = document.querySelectorAll('#inventoryTable tr');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+        }
+
+        // Búsqueda en tiempo real
+        document.getElementById('searchInput').addEventListener('input', buscarProducto);
+
+        // Cargar datos iniciales desde backend
+        loadInventory();
+    </script>
+    <div id="footer-placeholder"></div>
+
+    <script>
+        // includeHTML: carga el <head> (estilos) y el <body> del archivo y ejecuta scripts dentro
+        async function includeHTML(url, selector){
+            try{
+                const res = await fetch(url);
+                if(!res.ok) throw new Error('HTTP ' + res.status);
+                const text = await res.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(text, 'text/html');
+                const container = document.querySelector(selector);
+                if(!container) return;
+                // Inyectar <link rel="stylesheet"> y <style> del head (si no existen ya)
+                try{
+                    const existingHrefs = Array.from(document.head.querySelectorAll('link[rel="stylesheet"]')).map(l=>l.href);
+                    Array.from(doc.head.querySelectorAll('link[rel="stylesheet"]')).forEach(link => {
+                        try{
+                            const href = link.href || link.getAttribute('href');
+                            if(href && !existingHrefs.includes(href)){
+                                const n = document.createElement('link');
+                                n.rel = 'stylesheet';
+                                if(link.href) n.href = link.href;
+                                else if(link.getAttribute('href')) n.href = link.getAttribute('href');
+                                document.head.appendChild(n);
+                                existingHrefs.push(n.href);
+                            }
+                        }catch(_){}
+                    });
+                    Array.from(doc.head.querySelectorAll('style')).forEach(s => {
+                        const clone = document.createElement('style');
+                        clone.textContent = s.textContent;
+                        document.head.appendChild(clone);
+                    });
+                }catch(e){ console.warn('includeHTML: head injection failed', e); }
+
+                container.innerHTML = '';
+                Array.from(doc.body.childNodes).forEach(node => {
+                    if(node.tagName && node.tagName.toLowerCase() === 'script') return;
+                    container.appendChild(document.importNode(node, true));
+                });
+                const scripts = doc.querySelectorAll('script');
+                for(const s of scripts){
+                    if(s.src){
+                        await new Promise((resolve)=>{
+                            const newScript = document.createElement('script');
+                            newScript.src = s.src;
+                            newScript.async = false;
+                            newScript.onload = () => resolve();
+                            newScript.onerror = () => resolve();
+                            document.head.appendChild(newScript);
+                        });
+                    } else {
+                        const newScript = document.createElement('script');
+                        newScript.textContent = s.textContent;
+                        container.appendChild(newScript);
+                    }
+                }
+            }catch(e){ console.error('includeHTML', e); }
+        }
+        document.addEventListener('DOMContentLoaded', ()=>{
+            includeHTML('header.html', '#header-placeholder');
+            includeHTML('footer.html', '#footer-placeholder');
+        });
+    </script>
+</body>
+</html>

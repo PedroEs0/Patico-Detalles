@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patico Detalles - Sistema de Inventario</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../css/estilos.css">
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="header-placeholder"></div>
+    
+    <!-- Contenido Principal -->
+    <main class="main-content">
+        <div class="welcome-section">
+            <h2 class="welcome-title">¡Bienvenido, <span id="nombreUsuario">Usuario</span>!</h2>
+            <p class="welcome-description">
+                Selecciona un módulo para comenzar a gestionar tu negocio
+            </p>
+        </div>
+
+        <!-- Grid de Módulos -->
+        <div class="modules-grid">
+            <!-- Ventas -->
+            <div class="module-card" onclick="navigateTo('ventas')">
+                <div class="module-icon">
+                    <i class="bi bi-cart-check"></i>
+                </div>
+                <h3 class="module-title">Punto de Venta</h3>
+                <p class="module-description">
+                    Realiza ventas rápidas, genera facturas y administra el efectivo
+                </p>
+            </div>
+
+            <!-- Reabastecer Inventario -->
+            <div class="module-card" onclick="navigateTo('reabastecer')">
+                <div class="module-icon">
+                    <i class="bi bi-box-arrow-in-down"></i>
+                </div>
+                <h3 class="module-title">Reabastecer</h3>
+                <p class="module-description">
+                    Agrega nuevos productos y actualiza el stock del inventario
+                </p>
+            </div>
+
+            <!-- Ver Inventario -->
+            <div class="module-card" onclick="navigateTo('inventario')">
+                <div class="module-icon">
+                    <i class="bi bi-box-seam"></i>
+                </div>
+                <h3 class="module-title">Inventario Actual</h3>
+                <p class="module-description">
+                    Consulta, modifica y elimina productos del inventario
+                </p>
+            </div>
+
+            <!-- Reportes -->
+            <div class="module-card" onclick="navigateTo('reportes')">
+                <div class="module-icon">
+                    <i class="bi bi-graph-up"></i>
+                </div>
+                <h3 class="module-title">Reportes</h3>
+                <p class="module-description">
+                    Analiza ventas, estadísticas y métricas de tu negocio
+                </p>
+            </div>
+        </div>
+
+        <!-- Estadísticas Rápidas -->
+        <div class="quick-stats">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="bi bi-box-seam"></i>
+                </div>
+                <div class="stat-value" id="statProductos">--</div>
+                <div class="stat-label">Productos en Stock</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="bi bi-cart3"></i>
+                </div>
+                <div class="stat-value" id="statVentas">--</div>
+                <div class="stat-label">Ventas Hoy</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="bi bi-cash-coin"></i>
+                </div>
+                <div class="stat-value" id="statIngresos">--</div>
+                <div class="stat-label">Ingresos del Mes</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+                <div class="stat-value" id="statStockBajo">--</div>
+                <div class="stat-label">Stock Bajo</div>
+            </div>
+        </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // ========== VERIFICACIÓN DE SESIÓN ==========
+        function verificarSesion() {
+            const session = localStorage.getItem('paticoSession');
+            
+            if (!session) {
+                // No hay sesión, redirigir al login
+                window.location.href = 'login.html';
+                return null;
+            }
+            
+            try {
+                const sessionData = JSON.parse(session);
+                
+                // Verificar si la sesión ha expirado (si no está marcado "recordar")
+                if (!sessionData.recordar) {
+                    const loginTime = new Date(sessionData.loginTime);
+                    const now = new Date();
+                    const hoursDiff = (now - loginTime) / (1000 * 60 * 60);
+                    
+                    // Sesión expira después de 24 horas si no está marcado "recordar"
+                    if (hoursDiff > 24) {
+                        cerrarSesion();
+                        return null;
+                    }
+                }
+                
+                return sessionData;
+            } catch (error) {
+                console.error('Error al leer sesión:', error);
+                cerrarSesion();
+                return null;
+            }
+        }
+
+        function cerrarSesion() {
+            localStorage.removeItem('paticoSession');
+            window.location.href = 'login.html';
+        }
+
+        // ========== INICIALIZACIÓN ==========
+        window.addEventListener('DOMContentLoaded', () => {
+            const sessionData = verificarSesion();
+            
+            if (sessionData) {
+                // Mostrar nombre del usuario
+                const nombreUsuario = document.getElementById('nombreUsuario');
+                if (nombreUsuario) {
+                    nombreUsuario.textContent = sessionData.nombre || sessionData.usuario;
+                }
+                
+                // Cargar estadísticas
+                cargarEstadisticas();
+            }
+            
+            // Cargar header y footer
+            includeHTML('header.html', '#header-placeholder');
+            includeHTML('footer.html', '#footer-placeholder');
+            
+            // Animación de entrada
+            animarCards();
+        });
+
+        // ========== NAVEGACIÓN ==========
+        function navigateTo(module) {
+            const routes = {
+                'ventas': 'ventas.html',
+                'reabastecer': 'reabastecer.html',
+                'inventario': 'inv_actual.html',
+                'reportes': 'reportes.html'
+            };
+
+            if (routes[module]) {
+                window.location.href = routes[module];
+            } else {
+                alert(`Navegando al módulo de ${module.toUpperCase()}...\n🚧 En desarrollo`);
+            }
+        }
+
+        // ========== CARGAR ESTADÍSTICAS ==========
+        async function cargarEstadisticas() {
+            try {
+                // Simular datos (reemplazar con llamadas reales a tu API)
+                const stats = {
+                    productos: 48,
+                    ventasHoy: 23,
+                    ingresosMes: '$1.2M',
+                    stockBajo: 5
+                };
+                
+                // Actualizar valores en la interfaz
+                document.getElementById('statProductos').textContent = stats.productos;
+                document.getElementById('statVentas').textContent = stats.ventasHoy;
+                document.getElementById('statIngresos').textContent = stats.ingresosMes;
+                document.getElementById('statStockBajo').textContent = stats.stockBajo;
+                
+                // Si tienes backend, usa esto:
+                /*
+                const res = await fetch('http://localhost:3000/api/estadisticas');
+                const data = await res.json();
+                
+                document.getElementById('statProductos').textContent = data.productos;
+                document.getElementById('statVentas').textContent = data.ventasHoy;
+                document.getElementById('statIngresos').textContent = '$' + data.ingresosMes.toLocaleString();
+                document.getElementById('statStockBajo').textContent = data.stockBajo;
+                */
+            } catch (error) {
+                console.error('Error cargando estadísticas:', error);
+            }
+        }
+
+        // ========== ANIMACIÓN DE CARDS ==========
+        function animarCards() {
+            const cards = document.querySelectorAll('.module-card');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(30px)';
+                
+                setTimeout(() => {
+                    card.style.transition = 'all 0.6s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 150);
+            });
+        }
+
+        // ========== INCLUDE HTML (header y footer) ==========
+        async function includeHTML(url, selector) {
+            try {
+                const res = await fetch(url);
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const text = await res.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(text, 'text/html');
+                const container = document.querySelector(selector);
+                if (!container) return;
+                
+                // Inyectar estilos
+                try {
+                    const existingHrefs = Array.from(document.head.querySelectorAll('link[rel="stylesheet"]')).map(l => l.href);
+                    Array.from(doc.head.querySelectorAll('link[rel="stylesheet"]')).forEach(link => {
+                        try {
+                            const href = link.href || link.getAttribute('href');
+                            if (href && !existingHrefs.includes(href)) {
+                                const n = document.createElement('link');
+                                n.rel = 'stylesheet';
+                                n.href = href;
+                                document.head.appendChild(n);
+                                existingHrefs.push(n.href);
+                            }
+                        } catch(_) {}
+                    });
+                    
+                    Array.from(doc.head.querySelectorAll('style')).forEach(s => {
+                        const clone = document.createElement('style');
+                        clone.textContent = s.textContent;
+                        document.head.appendChild(clone);
+                    });
+                } catch(e) {
+                    console.warn('includeHTML: head injection failed', e);
+                }
+
+                // Vaciar contenedor
+                container.innerHTML = '';
+                
+                // Importar nodos del body
+                Array.from(doc.body.childNodes).forEach(node => {
+                    if (node.tagName && node.tagName.toLowerCase() === 'script') return;
+                    container.appendChild(document.importNode(node, true));
+                });
+
+                // Ejecutar scripts
+                const scripts = doc.querySelectorAll('script');
+                for (const s of scripts) {
+                    if (s.src) {
+                        await new Promise((resolve) => {
+                            const newScript = document.createElement('script');
+                            newScript.src = s.src;
+                            newScript.async = false;
+                            newScript.onload = () => resolve();
+                            newScript.onerror = () => resolve();
+                            document.head.appendChild(newScript);
+                        });
+                    } else {
+                        const newScript = document.createElement('script');
+                        newScript.textContent = s.textContent;
+                        container.appendChild(newScript);
+                    }
+                }
+            } catch(e) {
+                console.error('includeHTML', e);
+            }
+        }
+
+        // Actualizar estadísticas cada 30 segundos
+        setInterval(cargarEstadisticas, 30000);
+    </script>
+</body>
+</html>

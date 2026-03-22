@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patico Detalles - Sistema de Inventario</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../css/estilos.css">
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="header-gradient">
+        <!-- Elementos decorativos distribuidos por todo el fondo -->
+        <!-- Fila superior -->
+        <div class="deco-element teddy-1">🧸</div>
+        <div class="deco-element perfume-1">🧴</div>
+        <div class="deco-element gift-1">🎁</div>
+        <div class="deco-element lipstick-1">💄</div>
+        
+        <div class="banner-content">
+            <div class="brand-section">
+                <div class="logo-box">
+                    <img src="../img/logo4.png" alt="Patico logo" class="logo-img">
+                </div>
+                <h1 class="company-title">Patico Detalles</h1>
+            </div>
+            
+            <nav class="nav-menu">
+                <a class="nav-button" href="index.html">
+                    <i class="bi bi-house-door"></i> Inicio
+                </a>
+                <a class="nav-button" href="ventas.html">
+                    <i class="bi bi-cart-check"></i> Punto de Venta
+                </a>
+                <a class="nav-button" href="reabastecer.html">
+                    <i class="bi bi-box-arrow-in-down"></i> Reabastecer
+                </a>
+                <a class="nav-button" href="inv_actual.html">
+                    <i class="bi bi-box-seam"></i> Inventario Actual
+                </a>
+                <a class="nav-button" href="reportes.html">
+                    <i class="bi bi-graph-up"></i> Reportes
+                </a>
+            </nav>
+
+           <!-- Notificaciones y Usuario -->
+            <div style="display:flex; align-items:center; gap:12px; position:relative; z-index:9999;">
+                <!-- Notificaciones -->
+                <button id="btnNotifications" class="nav-button" title="Notificaciones" style="position:relative; background:transparent; border:none; cursor:pointer;">
+                    <i class="bi bi-bell" style="font-size:20px; color:#513535;"></i>
+                    <span id="notifBadge" style="display:none; position:absolute; top:-6px; right:-6px; background:#ff3b30; color:#fff; font-weight:700; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; font-size:12px;">!</span>
+                </button>
+                
+                <!-- Usuario -->
+                <div style="position:relative;">
+                    <button id="btnUserMenu" class="nav-button" title="Mi cuenta" style="background:transparent; border:none; cursor:pointer; display:flex; align-items:center; gap:6px;">
+                        <i class="bi bi-person-circle" style="font-size:22px; color:#513535;"></i>
+                    </button>
+                    
+                    <!-- Menú desplegable de usuario -->
+                    <div id="userDropdown" style="display:none; position:fixed; top:70px; right:20px; background:#fff; border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,0.25); min-width:220px; z-index:9999; overflow:hidden;">
+                        <div style="padding:16px; border-bottom:2px solid #f0e6e8;">
+                            <div style="font-weight:600; color:#513535; font-size:15px;" id="dropdownUserName">Usuario</div>
+                            <div style="font-size:13px; color:#8b6b6b; margin-top:2px;" id="dropdownUserRole">Administrador</div>
+                        </div>
+                        <button id="btnCerrarSesion" style="width:100%; padding:12px 16px; background:transparent; border:none; text-align:left; cursor:pointer; font-weight:600; color:#c49999; font-size:14px; transition:all 0.2s; display:flex; align-items:center; gap:8px; font-family:'Quicksand', sans-serif;">
+                            <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Modal de Notificaciones (in-page) -->
+    <div id="notifModal" class="notif-modal-overlay" role="dialog" aria-hidden="true">
+        <div class="notif-modal-content">
+            <div class="notif-modal-header">
+                <h3 style="margin:0; color:#513535;">Notificaciones</h3>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <button id="btnNotifRefresh" class="nav-button" style="padding:6px 10px; font-size:14px;"> <i class="bi bi-arrow-clockwise"></i> </button>
+                    <button id="btnNotifClose" class="nav-button" style="padding:6px 10px; font-size:14px;"> <i class="bi bi-x-lg"></i> </button>
+                </div>
+            </div>
+            <div class="notif-modal-body">
+                <div id="notifListContainer">
+                    <!-- elementos de notificación se inyectan aquí -->
+                </div>
+                <div id="notifEmpty" style="display:none; text-align:center; color:#8b6b6b; margin-top:18px;">No tienes notificaciones pendientes</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Marcar el enlace activo según el archivo en la URL y inicializar notificaciones.
+        (function(){
+            const path = window.location.pathname.split('/').pop() || 'index.html';
+            document.querySelectorAll('.nav-button').forEach(el => {
+                el.classList.remove('active');
+                const href = el.getAttribute('href');
+                if (!href) return;
+                // Comparar solo el nombre del archivo
+                if (href === path || (href === 'index.html' && path === '')) {
+                    el.classList.add('active');
+                }
+            });
+            // Inicializar notificaciones (función hoisted)
+            if(typeof initNotifications === 'function'){
+                initNotifications();
+            }
+            // Inicializar menú de usuario
+            initUserMenu();
+        })();
+
+        // --- Notificaciones ---
+        // Configurar base URL del API. Si la página se abre desde `file://` o desde
+        // un servidor estático distinto al backend, hacer fallback a http://localhost:3000
+        const API_BASE = (window.__API_BASE__) || (location.protocol === 'file:' ? 'http://localhost:3000' : (location.origin && location.origin.includes(':3000') ? location.origin : 'http://localhost:3000'));
+        console.log('[notif] API_BASE =', API_BASE);
+
+        // Último error de fetch para mostrar en el modal si hay problemas
+        window.lastNotifFetchError = null;
+        async function fetchNotifications(){
+            try{
+                const res = await fetch(`${API_BASE}/api/notificaciones`);
+                // registrar para depuración
+                console.log('[notif] GET ' + API_BASE + '/api/notificaciones ->', res.status, res.statusText);
+                if(!res.ok){
+                    const txt = await res.text().catch(()=>null);
+                    window.lastNotifFetchError = `HTTP ${res.status} ${res.statusText} - ${txt || ''}`;
+                    return [];
+                }
+                const data = await res.json();
+                window.lastNotifFetchError = null;
+                return Array.isArray(data) ? data : (data.result || []);
+            }catch(e){
+                console.error('[notif] fetch error', e);
+                window.lastNotifFetchError = String(e.message || e);
+                return [];
+            }
+        }
+
+        async function updateNotifBadge(){
+            const notes = await fetchNotifications();
+            const unread = notes.filter(n => (n.leida === false) || (n.leida === 'f') ).length;
+            const badge = document.getElementById('notifBadge');
+            if(!badge) return;
+            if(unread > 0){
+                badge.style.display = 'flex';
+                badge.textContent = '!';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        async function markNotificationsAsRead(ids){
+            if(!ids || ids.length === 0) return;
+            await Promise.all(ids.map(id => {
+                try{
+                    return fetch(`${API_BASE}/api/notificaciones/${id}/marcar-leida`, { method: 'POST' });
+                }catch(e){ return null; }
+            }));
+        }
+
+        function escapeHtml(s){ if(!s) return ''; return String(s).replace(/[&<>\"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+
+        async function initNotifications(){
+            // Actualizar badge inicialmente y cada 30s
+            await updateNotifBadge();
+            setInterval(updateNotifBadge, 30000);
+
+            // Click en la campana: marcar leídas y abrir la ventana de notificaciones
+            const btn = document.getElementById('btnNotifications');
+            if(!btn) return;
+            btn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                const notes = await fetchNotifications();
+                // Renderizar en modal y mostrar
+                showNotifModal(notes);
+            });
+        }
+
+        // Mostrar modal y marcar como leídas las no leídas
+        async function showNotifModal(notes){
+            const modal = document.getElementById('notifModal');
+            const container = document.getElementById('notifListContainer');
+            const emptyEl = document.getElementById('notifEmpty');
+            container.innerHTML = '';
+            if(!notes || notes.length === 0){
+                // Si la petición falló, mostrar el error en lugar del texto genérico
+                if(window.lastNotifFetchError){
+                    emptyEl.style.display = 'block';
+                    emptyEl.textContent = 'Error cargando notificaciones: ' + window.lastNotifFetchError;
+                    emptyEl.style.color = '#a00';
+                } else {
+                    emptyEl.style.display = 'block';
+                    emptyEl.textContent = 'No tienes notificaciones pendientes';
+                    emptyEl.style.color = '#8b6b6b';
+                }
+            } else {
+                emptyEl.style.display = 'none';
+                notes.forEach(n => {
+                    const div = document.createElement('div');
+                    const isUnread = (n.leida === false || n.leida === 'f');
+                    div.className = 'notif-item ' + (isUnread ? 'notif-unread' : 'notif-read');
+                    const fecha = n.fecha_creacion || n.fecha || '';
+                    const msg = n.mensaje || n.mensaje_text || '';
+                    div.innerHTML = `
+                        <div style="flex:1">
+                            <div class="notif-message">${escapeHtml(msg)}</div>
+                            <div class="notif-time">${escapeHtml(fecha)}</div>
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
+            }
+            // Mostrar modal
+            modal.style.display = 'flex';
+            modal.setAttribute('aria-hidden','false');
+            document.body.style.overflow = 'hidden';
+
+            // Marcar como leídas
+            const unreadIds = notes.filter(n => (n.leida === false) || (n.leida === 'f'))
+                .map(n => n.id_notificacion || n.id || n.idNotificacion || n.id_notif).filter(Boolean);
+            if(unreadIds.length > 0){
+                await markNotificationsAsRead(unreadIds);
+                await updateNotifBadge();
+            }
+
+            // Botones del modal
+            document.getElementById('btnNotifClose').onclick = () => {
+                modal.style.display = 'none';
+                modal.setAttribute('aria-hidden','true');
+                document.body.style.overflow = '';
+            };
+            document.getElementById('btnNotifRefresh').onclick = async () => {
+                const fresh = await fetchNotifications();
+                showNotifModal(fresh);
+            };
+        }
+
+        // --- Menú de Usuario ---
+        function initUserMenu(){
+            const btnUserMenu = document.getElementById('btnUserMenu');
+            const userDropdown = document.getElementById('userDropdown');
+            const btnCerrarSesion = document.getElementById('btnCerrarSesion');
+            
+            if(!btnUserMenu || !userDropdown) return;
+            
+            // Obtener datos de sesión
+            const session = localStorage.getItem('paticoSession');
+            if(session){
+                try{
+                    const sessionData = JSON.parse(session);
+                    const dropdownUserName = document.getElementById('dropdownUserName');
+                    const dropdownUserRole = document.getElementById('dropdownUserRole');
+                    if(dropdownUserName){
+                        dropdownUserName.textContent = sessionData.nombre || sessionData.usuario || 'Usuario';
+                    }
+                    if(dropdownUserRole){
+                        dropdownUserRole.textContent = sessionData.rol || 'Usuario';
+                    }
+                }catch(e){
+                    console.error('Error leyendo sesión:', e);
+                }
+            }
+            
+            // Toggle del menú
+            btnUserMenu.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isVisible = userDropdown.style.display === 'block';
+                userDropdown.style.display = isVisible ? 'none' : 'block';
+            });
+            
+            // Cerrar al hacer click fuera
+            document.addEventListener('click', (e) => {
+                if(!btnUserMenu.contains(e.target) && !userDropdown.contains(e.target)){
+                    userDropdown.style.display = 'none';
+                }
+            });
+            
+            // Cerrar sesión
+            if(btnCerrarSesion){
+                btnCerrarSesion.addEventListener('click', () => {
+                    if(confirm('¿Estás seguro de que deseas cerrar sesión?')){
+                        localStorage.removeItem('paticoSession');
+                        window.location.href = 'login.html';
+                    }
+                });
+                
+                // Hover effect
+                btnCerrarSesion.addEventListener('mouseenter', () => {
+                    btnCerrarSesion.style.background = '#fff5f7';
+                });
+                btnCerrarSesion.addEventListener('mouseleave', () => {
+                    btnCerrarSesion.style.background = 'transparent';
+                });
+            }
+        }
+    </script>
+</body>
+</html>
